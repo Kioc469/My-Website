@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A07: Authentication Failures - Pentesting Lab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .nav {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .nav a {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 0 10px;
+            transition: background 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .nav a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .challenge-section {
+            background: white;
+            margin-bottom: 30px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-left: 5px solid #f5576c;
+        }
+        
+        .challenge-section h2 {
+            color: #f5576c;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .challenge-number {
+            background: #f5576c;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-right: 15px;
+        }
+        
+        .vulnerability-demo {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px dashed #f5576c;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .btn {
+            background: #f5576c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+            margin: 5px;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            background: #f093fb;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            width: auto;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .result-area {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            min-height: 50px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .attack-hint {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .attack-hint h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .warning {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        
+        .credential-hint {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .session-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .attempt-counter {
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #f44336;
+            text-align: center;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .password-strength {
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        
+        .strength-weak {
+            color: #e74c3c;
+        }
+        
+        .strength-medium {
+            color: #f39c12;
+        }
+        
+        .strength-strong {
+            color: #27ae60;
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .admin-panel {
+            background: #fff3e0;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ff9800;
+        }
+        
+        .user-list {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .user-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .badge-admin {
+            background: #ff5722;
+            color: white;
+        }
+        
+        .badge-user {
+            background: #2196f3;
+            color: white;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #2196f3);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔑 A07: Authentication Failures Lab</h1>
+            <p>Practice bypassing authentication and session management vulnerabilities</p>
+        </div>
+        
+        <div class="nav">
+            <a href="index.html">← Back to Hub</a>
+            <a href="#weak-passwords">Weak Passwords</a>
+            <a href="#brute-force">Brute Force</a>
+            <a href="#session-issues">Session Issues</a>
+            <a href="#auth-bypass">Auth Bypass</a>
+            <a href="#credential-stuffing">Credential Stuffing</a>
+        </div>
+        
+        <!-- Challenge 1: Weak Password Policies -->
+        <div class="challenge-section" id="weak-passwords">
+            <h2><span class="challenge-number">1</span>Weak Password Policies</h2>
+            <p>Exploit systems with inadequate password requirements and common password usage.</p>
+            
+            <div class="vulnerability-demo">
+                <div class="login-container">
+                    <h3>User Registration</h3>
+                    <form onsubmit="return registerUser()">
+                        <div class="form-group">
+                            <label for="regUsername">Username:</label>
+                            <input type="text" id="regUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="regPassword">Password:</label>
+                            <input type="password" id="regPassword" required oninput="checkPasswordStrength()">
+                            <div id="passwordStrength" class="password-strength"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="regEmail">Email:</label>
+                            <input type="email" id="regEmail" required>
+                        </div>
+                        <button type="submit" class="btn">Register</button>
+                    </form>
+                </div>
+                
+                <div id="regResult" class="result-area"></div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Weak Password Attack Scenarios:</h4>
+                <div class="credential-hint">
+                    <strong>Common Weak Passwords to Try:</strong><br>
+                    password, 123456, admin, qwerty, letmein, welcome, password123
+                </div>
+                <ul>
+                    <li>Register with extremely weak passwords</li>
+                    <li>Test password complexity requirements</li>
+                    <li>Try common passwords and patterns</li>
+                    <li>Use dictionary words and simple variations</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Challenge 2: Brute Force Attack -->
+        <div class="challenge-section" id="brute-force">
+            <h2><span class="challenge-number">2</span>Brute Force Attack</h2>
+            <p>Practice brute force attacks against login systems with weak rate limiting.</p>
+            
+            <div class="vulnerability-demo">
+                <div class="two-column">
+                    <div class="login-container">
+                        <h3>Login System</h3>
+                        <div class="attempt-counter">
+                            Login Attempts: <span id="attemptCount">0</span>
+                        </div>
+                        <form onsubmit="return attemptLogin()">
+                            <div class="form-group">
+                                <label for="loginUsername">Username:</label>
+                                <input type="text" id="loginUsername" value="admin">
+                            </div>
+                            <div class="form-group">
+                                <label for="loginPassword">Password:</label>
+                                <input type="password" id="loginPassword">
+                            </div>
+                            <button type="submit" class="btn">Login</button>
+                        </form>
+                        <button class="btn btn-secondary" onclick="resetAttempts()">Reset Attempts</button>
+                    </div>
+                    
+                    <div>
+                        <h3>Automated Brute Force</h3>
+                        <div class="form-group">
+                            <label for="targetUser">Target Username:</label>
+                            <input type="text" id="targetUser" value="admin">
+                        </div>
+                        <div class="form-group">
+                            <label for="passwordList">Password List:</label>
+                            <select id="passwordList">
+                                <option value="common">Common Passwords</option>
+                                <option value="numeric">Numeric Passwords</option>
+                                <option value="custom">Custom List</option>
+                            </select>
+                        </div>
+                        <button class="btn" onclick="startBruteForce()">Start Brute Force</button>
+                        <button class="btn btn-secondary" onclick="stopBruteForce()">Stop</button>
+                        
+                        <div class="progress-bar">
+                            <div id="bruteProgress" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div id="bruteStatus" class="result-area"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Brute Force Techniques:</h4>
+                <div class="credential-hint">
+                    <strong>Target Accounts:</strong> admin, administrator, user, test<br>
+                    <strong>Weak Passwords:</strong> admin, password, 123456, admin123
+                </div>
+                <div class="code-block">Common Password Lists:
+1. password, admin, 123456, qwerty
+2. 1234, 0000, 1111, 2222
+3. letmein, welcome, login, guest</div>
+                <ul>
+                    <li>Try manual brute force first</li>
+                    <li>Use automated brute force tool</li>
+                    <li>Note the lack of rate limiting</li>
+                    <li>Try different username/password combinations</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Challenge 3: Session Management Issues -->
+        <div class="challenge-section" id="session-issues">
+            <h2><span class="challenge-number">3</span>Session Management Vulnerabilities</h2>
+            <p>Exploit weak session handling, fixation, and session hijacking vulnerabilities.</p>
+            
+            <div class="vulnerability-demo">
+                <div class="session-info">
+                    <h4>Current Session Info:</h4>
+                    <strong>Session ID:</strong> <span id="currentSessionId">Not logged in</span><br>
+                    <strong>User:</strong> <span id="currentUser">None</span><br>
+                    <strong>Role:</strong> <span id="currentRole">Guest</span>
+                </div>
+                
+                <div class="two-column">
+                    <div>
+                        <h3>Quick Login</h3>
+                        <button class="btn" onclick="quickLogin('user')">Login as User</button>
+                        <button class="btn" onclick="quickLogin('admin')">Login as Admin</button>
+                        <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                    </div>
+                    
+                    <div>
+                        <h3>Session Manipulation</h3>
+                        <div class="form-group">
+                            <label for="sessionIdInput">Custom Session ID:</label>
+                            <input type="text" id="sessionIdInput" placeholder="Enter session ID">
+                        </div>
+                        <button class="btn" onclick="setCustomSession()">Set Session</button>
+                        <button class="btn" onclick="generatePredictableSession()">Generate Predictable</button>
+                    </div>
+                </div>
+                
+                <div id="sessionResult" class="result-area"></div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Session Attack Scenarios:</h4>
+                <div class="credential-hint">
+                    <strong>Predictable Session IDs:</strong> 1001, 1002, admin123, user456<br>
+                    <strong>Admin Sessions:</strong> admin_session_123, ADMIN001
+                </div>
+                <ul>
+                    <li>Try session fixation attacks</li>
+                    <li>Guess predictable session IDs</li>
+                    <li>Hijack other users' sessions</li>
+                    <li>Use browser DevTools to inspect session storage</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Challenge 4: Authentication Bypass -->
+        <div class="challenge-section" id="auth-bypass">
+            <h2><span class="challenge-number">4</span>Authentication Bypass</h2>
+            <p>Bypass authentication mechanisms through logic flaws and implementation errors.</p>
+            
+            <div class="vulnerability-demo">
+                <div class="login-container">
+                    <h3>Secure Login Portal</h3>
+                    <form onsubmit="return secureLogin()">
+                        <div class="form-group">
+                            <label for="secureUsername">Username:</label>
+                            <input type="text" id="secureUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="securePassword">Password:</label>
+                            <input type="password" id="securePassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="authToken">Authentication Token:</label>
+                            <input type="text" id="authToken" placeholder="Leave blank for guest access">
+                        </div>
+                        <input type="hidden" id="isAuthenticated" value="false">
+                        <input type="hidden" id="userRole" value="guest">
+                        <button type="submit" class="btn">Secure Login</button>
+                    </form>
+                </div>
+                
+                <div id="bypassResult" class="result-area"></div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Authentication Bypass Techniques:</h4>
+                <div class="code-block">Hidden Fields to Modify:
+- isAuthenticated: Change to "true"
+- userRole: Change to "admin"
+- authToken: Try "bypass", "admin", "true"</div>
+                <ul>
+                    <li>Use DevTools to modify hidden form fields</li>
+                    <li>Try SQL injection payloads: ' OR '1'='1</li>
+                    <li>Bypass with empty/null values</li>
+                    <li>Manipulate client-side authentication logic</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Challenge 5: Credential Stuffing -->
+        <div class="challenge-section" id="credential-stuffing">
+            <h2><span class="challenge-number">5</span>Credential Stuffing Attack</h2>
+            <p>Practice credential stuffing using commonly breached username/password combinations.</p>
+            
+            <div class="vulnerability-demo">
+                <div class="admin-panel">
+                    <h3>Multi-User Login Test</h3>
+                    <div class="user-list">
+                        <h4>System Users:</h4>
+                        <div class="user-item">
+                            <span>admin <span class="badge badge-admin">ADMIN</span></span>
+                            <span>Status: <span id="admin-status" class="error">Locked</span></span>
+                        </div>
+                        <div class="user-item">
+                            <span>john.doe <span class="badge badge-user">USER</span></span>
+                            <span>Status: <span id="john-status" class="error">Locked</span></span>
+                        </div>
+                        <div class="user-item">
+                            <span>jane.smith <span class="badge badge-user">USER</span></span>
+                            <span>Status: <span id="jane-status" class="error">Locked</span></span>
+                        </div>
+                        <div class="user-item">
+                            <span>bob.wilson <span class="badge badge-user">USER</span></span>
+                            <span>Status: <span id="bob-status" class="error">Locked</span></span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" onclick="startCredentialStuffing()">Start Credential Stuffing</button>
+                    <button class="btn btn-secondary" onclick="resetUserStatuses()">Reset All</button>
+                    
+                    <div id="stuffingResult" class="result-area"></div>
+                </div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Credential Stuffing Database:</h4>
+                <div class="code-block">Common Breached Credentials:
+admin:admin, admin:password, admin:123456
+john.doe:password123, john.doe:john2023
+jane.smith:password, jane.smith:smith123
+bob.wilson:qwerty, bob.wilson:welcome</div>
+                <ul>
+                    <li>Test common credential combinations</li>
+                    <li>Use username variations (john, john.doe, jdoe)</li>
+                    <li>Try password patterns (name+year, name+123)</li>
+                    <li>Observe success patterns</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let currentSession = null;
+        let loginAttempts = 0;
+        let bruteForceInterval = null;
+        let bruteForceIndex = 0;
+        
+        // Password lists for brute force
+        const passwordLists = {
+            common: ['password', 'admin', '123456', 'qwerty', 'letmein', 'welcome', 'login', 'guest', 'admin123', 'password123'],
+            numeric: ['1234', '0000', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999', '123456'],
+            custom: ['admin', 'administrator', 'root', 'toor', 'pass', 'test', 'user', 'demo', 'sample']
+        };
+        
+        // Simulated user database
+        const users = {
+            'admin': 'admin',
+            'administrator': 'password',
+            'user': '123456',
+            'test': 'test',
+            'guest': 'guest',
+            'john.doe': 'password123',
+            'jane.smith': 'password',
+            'bob.wilson': 'qwerty'
+        };
+        
+        // Challenge 1: Password Strength Checker
+        function checkPasswordStrength() {
+            const password = document.getElementById('regPassword').value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            
+            if (password.length === 0) {
+                strengthDiv.innerHTML = '';
+                return;
+            }
+            
+            let strength = 'weak';
+            let message = 'Weak password';
+            
+            if (password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
+                strength = 'strong';
+                message = 'Strong password';
+            } else if (password.length >= 6) {
+                strength = 'medium';
+                message = 'Medium password';
+            }
+            
+            strengthDiv.innerHTML = `<span class="strength-${strength}">${message}</span>`;
+        }
+        
+        function registerUser() {
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const email = document.getElementById('regEmail').value;
+            const result = document.getElementById('regResult');
+            
+            // Check for weak passwords
+            const weakPasswords = ['password', '123456', 'admin', 'qwerty', 'letmein', 'welcome'];
+            const isWeak = weakPasswords.includes(password.toLowerCase()) || password.length < 4;
+            
+            result.innerHTML = `
+                <h4>Registration Result:</h4>
+                <p><strong>Username:</strong> ${username}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Password Strength:</strong> ${isWeak ? '<span class="error">WEAK!</span>' : '<span class="success">Acceptable</span>'}</p>
+                ${isWeak ? '<div class="success">🎯 SUCCESS! Weak password accepted!</div>' : ''}
+            `;
+            
+            return false;
+        }
+        
+        // Challenge 2: Brute Force
+        function attemptLogin() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            loginAttempts++;
+            
+            document.getElementById('attemptCount').textContent = loginAttempts;
+            
+            if (users[username] && users[username] === password) {
+                document.getElementById('attemptCount').parentElement.innerHTML = 
+                    `<div class="success">🎯 SUCCESS! Logged in as ${username} after ${loginAttempts} attempts!</div>`;
+                return false;
+            }
+            
+            // Simulate weak rate limiting (only warn after many attempts)
+            if (loginAttempts > 10) {
+                document.getElementById('attemptCount').parentElement.innerHTML += 
+                    '<div class="warning">Warning: Multiple failed attempts detected</div>';
+            }
+            
+            return false;
+        }
+        
+        function resetAttempts() {
+            loginAttempts = 0;
+            document.getElementById('attemptCount').textContent = '0';
+            document.getElementById('attemptCount').parentElement.innerHTML = 
+                'Login Attempts: <span id="attemptCount">0</span>';
+        }
+        
+        function startBruteForce() {
+            const username = document.getElementById('targetUser').value;
+            const listType = document.getElementById('passwordList').value;
+            const passwords = passwordLists[listType];
+            const status = document.getElementById('bruteStatus');
+            const progress = document.getElementById('bruteProgress');
+            
+            bruteForceIndex = 0;
+            
+            status.innerHTML = '<h4>Brute Force in Progress...</h4><div id="currentTry"></div>';
+            
+            bruteForceInterval = setInterval(() => {
+                if (bruteForceIndex >= passwords.length) {
+                    stopBruteForce();
+                    status.innerHTML += '<div class="error">Brute force completed - no success</div>';
+                    return;
+                }
+                
+                const password = passwords[bruteForceIndex];
+                const progressPercent = ((bruteForceIndex + 1) / passwords.length) * 100;
+                progress.style.width = progressPercent + '%';
+                
+                document.getElementById('currentTry').innerHTML = 
+                    `Trying: ${username}:${password} (${bruteForceIndex + 1}/${passwords.length})`;
+                
+                if (users[username] && users[username] === password) {
+                    stopBruteForce();
+                    status.innerHTML += `<div class="success">🎯 SUCCESS! Found credentials: ${username}:${password}</div>`;
+                    return;
+                }
+                
+                bruteForceIndex++;
+            }, 100);
+        }
+        
+        function stopBruteForce() {
+            if (bruteForceInterval) {
+                clearInterval(bruteForceInterval);
+                bruteForceInterval = null;
+            }
+        }
+        
+        // Challenge 3: Session Management
+        function quickLogin(userType) {
+            const sessionId = generateSessionId();
+            currentSession = {
+                id: sessionId,
+                user: userType,
+                role: userType === 'admin' ? 'administrator' : 'user'
+            };
+            
+            updateSessionDisplay();
+            
+            document.getElementById('sessionResult').innerHTML = 
+                `<div class="success">Logged in as ${userType}</div>`;
+        }
+        
+        function logout() {
+            currentSession = null;
+            updateSessionDisplay();
+            document.getElementById('sessionResult').innerHTML = '<div>Logged out successfully</div>';
+        }
+        
+        function generateSessionId() {
+            // Intentionally predictable session IDs
+            return 'sess_' + Math.floor(Math.random() * 1000) + '_' + Date.now().toString().slice(-4);
+        }
+        
+        function updateSessionDisplay() {
+            if (currentSession) {
+                document.getElementById('currentSessionId').textContent = currentSession.id;
+                document.getElementById('currentUser').textContent = currentSession.user;
+                document.getElementById('currentRole').textContent = currentSession.role;
+            } else {
+                document.getElementById('currentSessionId').textContent = 'Not logged in';
+                document.getElementById('currentUser').textContent = 'None';
+                document.getElementById('currentRole').textContent = 'Guest';
+            }
+        }
+        
+        function setCustomSession() {
+            const customId = document.getElementById('sessionIdInput').value;
+            if (!customId) return;
+            
+            // Check for admin session patterns
+            if (customId.toLowerCase().includes('admin') || customId === '1000' || customId === 'ADMIN001') {
+                currentSession = {
+                    id: customId,
+                    user: 'administrator',
+                    role: 'admin'
+                };
+                document.getElementById('sessionResult').innerHTML = 
+                    '<div class="success">🎯 SUCCESS! Admin session hijacked!</div>';
+            } else {
+                currentSession = {
+                    id: customId,
+                    user: 'unknown',
+                    role: 'user'
+                };
+                document.getElementById('sessionResult').innerHTML = 
+                    '<div>Custom session set</div>';
+            }
+            
+            updateSessionDisplay();
+        }
+        
+        function generatePredictableSession() {
+            const predictable = ['admin_session_123', 'user_1001', 'sess_admin', 'ADMIN001'];
+            const sessionId = predictable[Math.floor(Math.random() * predictable.length)];
+            document.getElementById('sessionIdInput').value = sessionId;
+        }
+        
+        // Challenge 4: Authentication Bypass
+        function secureLogin() {
+            const username = document.getElementById('secureUsername').value;
+            const password = document.getElementById('securePassword').value;
+            const token = document.getElementById('authToken').value;
+            const isAuth = document.getElementById('isAuthenticated').value;
+            const role = document.getElementById('userRole').value;
+            const result = document.getElementById('bypassResult');
+            
+            // Check for bypass attempts
+            if (isAuth === 'true' || role === 'admin' || token === 'bypass' || token === 'admin') {
+                result.innerHTML = `
+                    <div class="admin-panel">
+                        <h4>🔥 AUTHENTICATION BYPASSED!</h4>
+                        <p><strong>🎯 SUCCESS!</strong> You bypassed authentication!</p>
+                        <p>Access Level: Administrator</p>
+                        <p>Bypass Method: ${isAuth === 'true' ? 'Hidden field manipulation' : 
+                                         role === 'admin' ? 'Role escalation' : 'Token bypass'}</p>
+                    </div>
+                `;
+                return false;
+            }
+            
+            // SQL injection bypass
+            if (username.includes("'") || username.includes('OR') || password.includes("'")) {
+                result.innerHTML = `
+                    <div class="admin-panel">
+                        <h4>🔥 SQL INJECTION BYPASS!</h4>
+                        <p><strong>🎯 SUCCESS!</strong> SQL injection authentication bypass!</p>
+                        <p>Payload detected: ${username}</p>
+                    </div>
+                `;
+                return false;
+            }
+            
+            result.innerHTML = '<div class="error">Authentication failed</div>';
+            return false;
+        }
+        
+        // Challenge 5: Credential Stuffing
+        function startCredentialStuffing() {
+            const result = document.getElementById('stuffingResult');
+            const breachedCreds = [
+                ['admin', 'admin'],
+                ['admin', 'password'],
+                ['john.doe', 'password123'],
+                ['jane.smith', 'password'],
+                ['bob.wilson', 'qwerty']
+            ];
+            
+            result.innerHTML = '<h4>Testing breached credentials...</h4>';
+            let successCount = 0;
+            
+            breachedCreds.forEach(([username, password], index) => {
+                setTimeout(() => {
+                    if (users[username] && users[username] === password) {
+                        successCount++;
+                        document.getElementById(username.split('.')[0] + '-status').innerHTML = 
+                            '<span class="success">Compromised</span>';
+                        result.innerHTML += `<div class="success">✓ ${username}:${password}</div>`;
+                    } else {
+                        result.innerHTML += `<div class="error">✗ ${username}:${password}</div>`;
+                    }
+                    
+                    if (index === breachedCreds.length - 1) {
+                        result.innerHTML += `<div class="success">🎯 Credential stuffing complete! ${successCount} accounts compromised!</div>`;
+                    }
+                }, index * 500);
+            });
+        }
+        
+        function resetUserStatuses() {
+            ['admin', 'john', 'jane', 'bob'].forEach(user => {
+                document.getElementById(user + '-status').innerHTML = '<span class="error">Locked</span>';
+            });
+            document.getElementById('stuffingResult').innerHTML = '';
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSessionDisplay();
+            
+            console.log('%c🔑 AUTHENTICATION LAB LOADED', 'color: purple; font-size: 16px; font-weight: bold;');
+            console.log('Available attack vectors:');
+            console.log('1. Weak password policies');
+            console.log('2. Brute force attacks');
+            console.log('3. Session hijacking');
+            console.log('4. Authentication bypass');
+            console.log('5. Credential stuffing');
+            console.log('Users database:', users);
+        });
+    </script>
+</body>
+</html>
