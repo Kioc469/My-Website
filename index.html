@@ -1,10 +1,461 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>My Security Test Site</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OWASP Top 10 Vulnerability Lab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 0;
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .warning {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .warning h2 {
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .vuln-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid #ff6b6b;
+        }
+        
+        .vuln-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+        }
+        
+        .vuln-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+        }
+        
+        .vuln-card .rank {
+            background: #ff6b6b;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .vuln-card p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .challenges {
+            margin-bottom: 20px;
+        }
+        
+        .challenges h4 {
+            color: #34495e;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .challenge-list {
+            list-style: none;
+        }
+        
+        .challenge-list li {
+            background: #f8f9fa;
+            margin: 5px 0;
+            padding: 8px 12px;
+            border-radius: 5px;
+            border-left: 3px solid #3498db;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .challenge-list li:hover {
+            background: #e9ecef;
+        }
+        
+        .lab-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .lab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        .lab-button.coming-soon {
+            background: #95a5a6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        .lab-button.coming-soon:hover {
+            transform: none;
+        }
+        
+        .tools-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .tools-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .tool-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .tool-item h4 {
+            color: #34495e;
+            margin-bottom: 10px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        
+        .status-live {
+            background: #27ae60;
+        }
+        
+        .status-soon {
+            background: #f39c12;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to My Test Site!</h1>
-    <p>This site is for practicing DNS and security configurations.</p>
+    <div class="container">
+        <div class="header">
+            <h1>🔓 OWASP Top 10 Pentesting Lab</h1>
+            <p class="subtitle">Comprehensive Vulnerability Testing Environment</p>
+        </div>
+        
+        <div class="warning">
+            <h2>⚠️ EDUCATIONAL USE ONLY ⚠️</h2>
+            <p>This lab contains intentionally vulnerable code for educational purposes. Do not use these patterns in production applications.</p>
+        </div>
+        
+        <div class="grid">
+            <!-- A01: Broken Access Control -->
+            <div class="vuln-card">
+                <h3><span class="rank">A01</span>Broken Access Control <span class="status-indicator status-live"></span></h3>
+                <p>Practice exploiting access control vulnerabilities including IDOR, privilege escalation, and unauthorized access.</p>
+                <div class="challenges">
+                    <h4>Available Challenges:</h4>
+                    <ul class="challenge-list">
+                        <li>🎯 Insecure Direct Object References (IDOR)</li>
+                        <li>🎯 Horizontal Privilege Escalation</li>
+                        <li>🎯 Vertical Privilege Escalation</li>
+                        <li>🎯 Missing Access Controls</li>
+                        <li>🎯 Path Traversal</li>
+                    </ul>
+                </div>
+                <a href="access-control-lab.html" class="lab-button">Enter Lab</a>
+            </div>
+            
+            <!-- A02: Cryptographic Failures -->
+            <div class="vuln-card">
+                <h3><span class="rank">A02</span>Cryptographic Failures <span class="status-indicator status-live"></span></h3>
+                <p>Explore weak encryption, data exposure, and cryptographic implementation flaws.</p>
+                <div class="challenges">
+                    <h4>Available Challenges:</h4>
+                    <ul class="challenge-list">
+                        <li>🔐 Weak Encryption Implementation</li>
+                        <li>🔐 Sensitive Data Exposure</li>
+                        <li>🔐 Insecure Data Storage</li>
+                        <li>🔐 Weak Key Management</li>
+                        <li>🔐 Plaintext Secrets</li>
+                    </ul>
+                </div>
+                <a href="crypto-lab.html" class="lab-button">Enter Lab</a>
+            </div>
+            
+            <!-- A03: Injection -->
+            <div class="vuln-card">
+                <h3><span class="rank">A03</span>Injection Attacks <span class="status-indicator status-live"></span></h3>
+                <p>Master XSS, HTML injection, and various client-side injection techniques.</p>
+                <div class="challenges">
+                    <h4>Available Challenges:</h4>
+                    <ul class="challenge-list">
+                        <li>💉 Reflected XSS</li>
+                        <li>💉 Stored XSS</li>
+                        <li>💉 DOM-based XSS</li>
+                        <li>💉 HTML Injection</li>
+                        <li>💉 JavaScript Injection</li>
+                    </ul>
+                </div>
+                <a href="injection-lab.html" class="lab-button">Enter Lab</a>
+            </div>
+            
+            <!-- A04: Insecure Design -->
+            <div class="vuln-card">
+                <h3><span class="rank">A04</span>Insecure Design <span class="status-indicator status-live"></span></h3>
+                <p>Identify design flaws, logic vulnerabilities, and architectural security issues.</p>
+                <div class="challenges">
+                    <h4>Available Challenges:</h4>
+                    <ul class="challenge-list">
+                        <li>🏗️ Business Logic Bypass</li>
+                        <li>🏗️ Race Conditions</li>
+                        <li>🏗️ Insecure Workflows</li>
+                        <li>🏗️ Missing Security Controls</li>
+                        <li>🏗️ Design Pattern Flaws</li>
+                    </ul>
+                </div>
+                <a href="design-lab.html" class="lab-button">Enter Lab</a>
+            </div>
+            
+            <!-- A05: Security Misconfiguration -->
+            <div class="vuln-card">
+                <h3><span class="rank">A05</span>Security Misconfiguration <span class="status-indicator status-live"></span></h3>
+                <p>Practice identifying and exploiting configuration vulnerabilities and exposed information.</p>
+                <div class="challenges">
+                    <h4>Available Challenges:</h4>
+                    <ul class="challenge-list">
+                        <li>⚙️ Missing Security Headers</li>
+                        <li>⚙️ Information Disclosure</li>
+                        <li>⚙️ Default Credentials</li>
+                        <li>⚙️ Exposed Admin Interfaces</li>
+                        <li>⚙️ Debug Information Leakage</li>
+                    </ul>
+                </div>
+                <a href="config-lab.html" class="lab-button">Enter Lab</a>
+            </div>
+            
+            <!-- A06: Vulnerable Components -->
+            <div class="vuln-card">
+                <h3><span class="rank">A06</span>Vulnerable Components <span class="status-indicator status-soon"></span></h3>
+                <p>Learn to identify and exploit known vulnerabilities in third-party components.</p>
+                <div class="challenges">
+                    <h4>Planned Challenges:</h4>
+                    <ul class="challenge-list">
+                        <li>📦 Outdated Libraries</li>
+                        <li>📦 Known CVE Exploitation</li>
+                        <li>📦 Dependency Confusion</li>
+                        <li>📦 Supply Chain Attacks</li>
+                    </ul>
+                </div>
+                <a href="#" class="lab-button coming-soon">Coming Soon</a>
+            </div>
+            
+            <!-- A07: Authentication Failures -->
+            <div class="vuln-card">
+                <h3><span class="rank">A07</span>Authentication Failures <span class="status-indicator status-live"></span></h3>
+                <p>Practice bypassing authentication and session management vulnerabilities.</p>
+                <div class="challenges">
+                    <h4>Available Challenges:</h4>
+                    <ul class="challenge-list">
+                        <li>🔑 Weak Password Policies</li>
+                        <li>🔑 Session Fixation</li>
+                        <li>🔑 Brute Force Attacks</li>
+                        <li>🔑 Credential Stuffing</li>
+                        <li>🔑 Authentication Bypass</li>
+                    </ul>
+                </div>
+                <a href="auth-lab.html" class="lab-button">Enter Lab</a>
+            </div>
+            
+            <!-- A08: Data Integrity Failures -->
+            <div class="vuln-card">
+                <h3><span class="rank">A08</span>Data Integrity Failures <span class="status-indicator status-live"></span></h3>
+                <p>Explore client-side tampering and data integrity validation bypasses.</p>
+                <div class="challenges">
+                    <h4>Available Challenges:</h4>
+                    <ul class="challenge-list">
+                        <li>🛡️ Client-Side Validation Bypass</li>
+                        <li>🛡️ Price Manipulation</li>
+                        <li>🛡️ Hidden Field Tampering</li>
+                        <li>🛡️ JavaScript Bypass</li>
+                        <li>🛡️ Cookie Manipulation</li>
+                    </ul>
+                </div>
+                <a href="integrity-lab.html" class="lab-button">Enter Lab</a>
+            </div>
+            
+            <!-- A09: Logging Failures -->
+            <div class="vuln-card">
+                <h3><span class="rank">A09</span>Logging & Monitoring Failures <span class="status-indicator status-live"></span></h3>
+                <p>Understanding the impact of insufficient logging and monitoring.</p>
+                <div class="challenges">
+                    <h4>Available Challenges:</h4>
+                    <ul class="challenge-list">
+                        <li>📝 Missing Security Logs</li>
+                        <li>📝 Log Injection</li>
+                        <li>📝 Insufficient Monitoring</li>
+                        <li>📝 Log Tampering</li>
+                        <li>📝 Data Retention Issues</li>
+                    </ul>
+                </div>
+                <a href="logging-lab.html" class="lab-button">Enter Lab</a>
+            </div>
+            
+            <!-- A10: SSRF -->
+            <div class="vuln-card">
+                <h3><span class="rank">A10</span>Server-Side Request Forgery <span class="status-indicator status-soon"></span></h3>
+                <p>Learn SSRF concepts and client-side request manipulation techniques.</p>
+                <div class="challenges">
+                    <h4>Planned Challenges:</h4>
+                    <ul class="challenge-list">
+                        <li>🌐 URL Manipulation</li>
+                        <li>🌐 Internal Service Access</li>
+                        <li>🌐 Cloud Metadata Exploitation</li>
+                        <li>🌐 Protocol Confusion</li>
+                    </ul>
+                </div>
+                <a href="#" class="lab-button coming-soon">Coming Soon</a>
+            </div>
+        </div>
+        
+        <div class="tools-section">
+            <h2>🛠️ Recommended Pentesting Tools</h2>
+            <div class="tools-grid">
+                <div class="tool-item">
+                    <h4>Burp Suite</h4>
+                    <p>Web application security testing platform</p>
+                </div>
+                <div class="tool-item">
+                    <h4>OWASP ZAP</h4>
+                    <p>Free security testing proxy</p>
+                </div>
+                <div class="tool-item">
+                    <h4>Browser DevTools</h4>
+                    <p>Built-in browser debugging tools</p>
+                </div>
+                <div class="tool-item">
+                    <h4>Nikto</h4>
+                    <p>Web server scanner</p>
+                </div>
+                <div class="tool-item">
+                    <h4>Gobuster</h4>
+                    <p>Directory and file brute-forcer</p>
+                </div>
+                <div class="tool-item">
+                    <h4>SQLmap</h4>
+                    <p>SQL injection exploitation tool</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>🔒 Built for ethical hacking education • Practice responsibly • Learn, understand, defend</p>
+        </div>
+    </div>
+    
+    <script>
+        // Add some interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click analytics for educational purposes
+            document.querySelectorAll('.lab-button:not(.coming-soon)').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    console.log(`🚀 Entering lab: ${this.href}`);
+                });
+            });
+            
+            // Warn about coming soon items
+            document.querySelectorAll('.coming-soon').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    alert('🚧 This lab is under development. Check back soon!');
+                });
+            });
+            
+            // Console message for pentesters
+            console.log('%c🔓 OWASP TOP 10 LAB ENVIRONMENT', 'color: red; font-size: 16px; font-weight: bold;');
+            console.log('Welcome to your pentesting playground!');
+            console.log('Each lab contains multiple vulnerability challenges.');
+            console.log('Use your Kali VM tools to identify and exploit the vulnerabilities.');
+        });
+    </script>
 </body>
 </html>
