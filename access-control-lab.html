@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A01: Broken Access Control - Pentesting Lab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #e74c3c;
+        }
+        
+        .nav {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .nav a {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 0 10px;
+            transition: background 0.3s;
+        }
+        
+        .nav a:hover {
+            background: #2980b9;
+        }
+        
+        .challenge-section {
+            background: white;
+            margin-bottom: 30px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-left: 5px solid #e74c3c;
+        }
+        
+        .challenge-section h2 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .challenge-section .challenge-number {
+            background: #e74c3c;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-right: 15px;
+        }
+        
+        .vulnerability-demo {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px dashed #e74c3c;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .btn {
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: #c0392b;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .result-area {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            min-height: 50px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .attack-hint {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .attack-hint h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .user-profile {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .admin-area {
+            background: #ffe6e6;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .file-list {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .file-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .file-item:hover {
+            background: #e9ecef;
+        }
+        
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .privilege-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .badge-user {
+            background: #3498db;
+            color: white;
+        }
+        
+        .badge-admin {
+            background: #e74c3c;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔓 A01: Broken Access Control Lab</h1>
+            <p>Practice exploiting access control vulnerabilities in a safe environment</p>
+        </div>
+        
+        <div class="nav">
+            <a href="index.html">← Back to Hub</a>
+            <a href="#idor">IDOR Challenge</a>
+            <a href="#privilege">Privilege Escalation</a>
+            <a href="#path-traversal">Path Traversal</a>
+            <a href="#missing-auth">Missing Auth</a>
+        </div>
+        
+        <!-- Challenge 1: IDOR -->
+        <div class="challenge-section" id="idor">
+            <h2><span class="challenge-number">1</span>Insecure Direct Object References (IDOR)</h2>
+            <p>This challenge simulates a user profile system where you can view other users' profiles by manipulating URL parameters.</p>
+            
+            <div class="vulnerability-demo">
+                <h3>User Profile Viewer</h3>
+                <div class="form-group">
+                    <label for="userId">User ID:</label>
+                    <input type="number" id="userId" value="1001" min="1000" max="9999">
+                </div>
+                <button class="btn" onclick="viewProfile()">View Profile</button>
+                <button class="btn btn-secondary" onclick="viewMyProfile()">View My Profile</button>
+                
+                <div id="profileResult" class="result-area"></div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Attack Scenarios:</h4>
+                <ul>
+                    <li>Try different User IDs (1000-1010) to access other profiles</li>
+                    <li>Look for admin accounts (try 1000, 9999)</li>
+                    <li>Use Burp Suite to intercept and modify requests</li>
+                    <li>Check for sensitive information in other profiles</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Challenge 2: Horizontal Privilege Escalation -->
+        <div class="challenge-section" id="privilege">
+            <h2><span class="challenge-number">2</span>Horizontal Privilege Escalation</h2>
+            <p>Access other users' documents and settings without proper authorization.</p>
+            
+            <div class="vulnerability-demo">
+                <h3>Document Management System</h3>
+                <div class="user-profile">
+                    <strong>Current User:</strong> john_doe <span class="privilege-badge badge-user">USER</span><br>
+                    <strong>User ID:</strong> <span id="currentUserId">1001</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="documentOwner">Document Owner ID:</label>
+                    <input type="number" id="documentOwner" value="1001">
+                </div>
+                <button class="btn" onclick="loadDocuments()">Load Documents</button>
+                
+                <div id="documentsResult" class="result-area"></div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Attack Scenarios:</h4>
+                <ul>
+                    <li>Change the Document Owner ID to access other users' files</li>
+                    <li>Try accessing admin documents (Owner ID: 1000)</li>
+                    <li>Look for sensitive files like passwords.txt, config.txt</li>
+                    <li>Use browser DevTools to modify hidden form fields</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Challenge 3: Path Traversal -->
+        <div class="challenge-section" id="path-traversal">
+            <h2><span class="challenge-number">3</span>Path Traversal Attack</h2>
+            <p>Exploit inadequate path validation to access files outside the intended directory.</p>
+            
+            <div class="vulnerability-demo">
+                <h3>File Download System</h3>
+                <div class="form-group">
+                    <label for="filename">Filename:</label>
+                    <input type="text" id="filename" value="user_manual.pdf" placeholder="Enter filename">
+                </div>
+                <button class="btn" onclick="downloadFile()">Download File</button>
+                
+                <div class="file-list">
+                    <h4>Available Files:</h4>
+                    <div class="file-item" onclick="setFilename('user_manual.pdf')">📄 user_manual.pdf</div>
+                    <div class="file-item" onclick="setFilename('terms.txt')">📄 terms.txt</div>
+                    <div class="file-item" onclick="setFilename('faq.html')">📄 faq.html</div>
+                </div>
+                
+                <div id="downloadResult" class="result-area"></div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Attack Scenarios:</h4>
+                <ul>
+                    <li>Try path traversal: <code>../../../etc/passwd</code></li>
+                    <li>Access config files: <code>../config/database.conf</code></li>
+                    <li>Look for backup files: <code>../backup/users.sql</code></li>
+                    <li>Try Windows paths: <code>..\..\windows\system32\drivers\etc\hosts</code></li>
+                </ul>
+                <div class="code-block">
+                Common payloads:
+                ../../../etc/passwd
+                ..\..\windows\win.ini
+                ../config/settings.json
+                ../logs/error.log
+                </div>
+            </div>
+        </div>
+        
+        <!-- Challenge 4: Missing Authorization -->
+        <div class="challenge-section" id="missing-auth">
+            <h2><span class="challenge-number">4</span>Missing Function Level Authorization</h2>
+            <p>Access administrative functions that lack proper authorization checks.</p>
+            
+            <div class="vulnerability-demo">
+                <h3>Admin Panel Access</h3>
+                <div class="user-profile">
+                    <strong>Current User:</strong> guest_user <span class="privilege-badge badge-user">GUEST</span><br>
+                    <strong>Access Level:</strong> Read Only
+                </div>
+                
+                <button class="btn" onclick="viewUsers()">View Users (Guest Access)</button>
+                <button class="btn" onclick="adminPanel()">Admin Panel</button>
+                <button class="btn" onclick="deleteUser()">Delete User</button>
+                <button class="btn" onclick="createUser()">Create User</button>
+                
+                <div id="adminResult" class="result-area"></div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Attack Scenarios:</h4>
+                <ul>
+                    <li>Try accessing admin functions as a guest user</li>
+                    <li>Look for hidden admin endpoints in the page source</li>
+                    <li>Use browser DevTools to modify user role</li>
+                    <li>Check for client-side authorization bypasses</li>
+                </ul>
+                <div class="code-block">
+                Hidden admin endpoints (check page source):
+                /admin/users
+                /admin/settings
+                /admin/logs
+                /api/admin/delete-user
+                </div>
+            </div>
+        </div>
+        
+        <!-- Challenge 5: Vertical Privilege Escalation -->
+        <div class="challenge-section">
+            <h2><span class="challenge-number">5</span>Vertical Privilege Escalation</h2>
+            <p>Escalate from regular user to administrator privileges.</p>
+            
+            <div class="vulnerability-demo">
+                <h3>User Settings Panel</h3>
+                <form onsubmit="return updateSettings()">
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" value="testuser" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" value="test@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Role:</label>
+                        <select id="role">
+                            <option value="user">User</option>
+                            <option value="moderator">Moderator</option>
+                            <option value="admin">Administrator</option>
+                        </select>
+                    </div>
+                    <input type="hidden" id="hiddenRole" value="user">
+                    <input type="hidden" id="isAdmin" value="false">
+                    <button type="submit" class="btn">Update Settings</button>
+                </form>
+                
+                <div id="settingsResult" class="result-area"></div>
+            </div>
+            
+            <div class="attack-hint">
+                <h4>🎯 Attack Scenarios:</h4>
+                <ul>
+                    <li>Modify the role dropdown to select Administrator</li>
+                    <li>Use DevTools to change hidden field values</li>
+                    <li>Intercept the request with Burp Suite and modify parameters</li>
+                    <li>Look for client-side validation bypasses</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden admin data for IDOR challenges -->
+    <script>
+        // Simulated user database
+        const users = {
+            1000: { name: "Administrator", email: "admin@company.com", role: "admin", sensitive: "Admin password: admin123!", salary: "$150,000" },
+            1001: { name: "John Doe", email: "john@company.com", role: "user", department: "Engineering", salary: "$85,000" },
+            1002: { name: "Jane Smith", email: "jane@company.com", role: "user", department: "Marketing", salary: "$70,000" },
+            1003: { name: "Bob Wilson", email: "bob@company.com", role: "manager", department: "Sales", salary: "$95,000" },
+            1004: { name: "Alice Brown", email: "alice@company.com", role: "user", department: "HR", salary: "$75,000" },
+            1005: { name: "Charlie Davis", email: "charlie@company.com", role: "user", department: "Finance", salary: "$80,000" },
+            9999: { name: "Super Admin", email: "superadmin@company.com", role: "superadmin", sensitive: "Root access enabled", salary: "$200,000" }
+        };
+        
+        // Simulated document database
+        const documents = {
+            1000: ["admin_passwords.txt", "server_configs.json", "employee_salaries.xlsx", "merger_plans.pdf"],
+            1001: ["my_notes.txt", "project_report.docx", "timesheet.pdf"],
+            1002: ["marketing_plan.pptx", "customer_data.xlsx", "campaign_results.pdf"],
+            1003: ["sales_targets.xlsx", "client_contacts.txt", "commission_report.pdf"],
+            1004: ["hr_policies.pdf", "employee_reviews.docx", "salary_bands.xlsx"],
+            1005: ["budget_2024.xlsx", "expense_reports.pdf", "financial_audit.docx"]
+        };
+        
+        // Simulated file system
+        const fileSystem = {
+            "user_manual.pdf": "User Manual Content - Safe file",
+            "terms.txt": "Terms and Conditions - Safe file",
+            "faq.html": "FAQ Content - Safe file",
+            "../config/database.conf": "🔥 DATABASE_PASSWORD=supersecret123\nHOST=db.internal.company.com\nUSER=admin",
+            "../../../etc/passwd": "🔥 root:x:0:0:root:/root:/bin/bash\nadmin:x:1000:1000:Administrator:/home/admin:/bin/bash",
+            "../backup/users.sql": "🔥 INSERT INTO users VALUES ('admin', 'password123', 'administrator');",
+            "../logs/error.log": "🔥 [ERROR] Failed login attempt for user 'admin' with password 'backup_pass_2024'",
+            "..\\windows\\win.ini": "🔥 [Windows System File]\n; This is a Windows initialization file",
+            "../config/settings.json": "🔥 {\"api_key\": \"sk-1234567890abcdef\", \"debug\": true, \"admin_email\": \"root@internal.com\"}"
+        };
+        
+        // Challenge 1: IDOR Functions
+        function viewProfile() {
+            const userId = document.getElementById('userId').value;
+            const result = document.getElementById('profileResult');
+            
+            if (users[userId]) {
+                const user = users[userId];
+                result.innerHTML = `
+                    <h4>User Profile - ID: ${userId}</h4>
+                    <strong>Name:</strong> ${user.name}<br>
+                    <strong>Email:</strong> ${user.email}<br>
+                    <strong>Role:</strong> ${user.role}<br>
+                    <strong>Department:</strong> ${user.department || 'N/A'}<br>
+                    <strong>Salary:</strong> ${user.salary || 'N/A'}<br>
+                    ${user.sensitive ? `<div class="error">🔥 SENSITIVE: ${user.sensitive}</div>` : ''}
+                `;
+                
+                if (userId == '1000' || userId == '9999') {
+                    result.innerHTML += '<div class="success">🎯 SUCCESS! You accessed an admin account!</div>';
+                }
+            } else {
+                result.innerHTML = '<div class="error">User not found</div>';
+            }
+        }
+        
+        function viewMyProfile() {
+            document.getElementById('userId').value = '1001';
+            viewProfile();
+        }
+        
+        // Challenge 2: Document Access
+        function loadDocuments() {
+            const ownerId = document.getElementById('documentOwner').value;
+            const result = document.getElementById('documentsResult');
+            
+            if (documents[ownerId]) {
+                const docs = documents[ownerId];
+                const userInfo = users[ownerId];
+                
+                result.innerHTML = `
+                    <h4>Documents for ${userInfo ? userInfo.name : 'Unknown User'} (ID: ${ownerId})</h4>
+                    <ul>
+                        ${docs.map(doc => `<li>📄 ${doc}</li>`).join('')}
+                    </ul>
+                `;
+                
+                if (ownerId == '1000') {
+                    result.innerHTML += '<div class="success">🎯 SUCCESS! You accessed admin documents!</div>';
+                } else if (ownerId != '1001') {
+                    result.innerHTML += '<div class="success">🎯 SUCCESS! You accessed another user\'s documents!</div>';
+                }
+            } else {
+                result.innerHTML = '<div class="error">No documents found for this user</div>';
+            }
+        }
+        
+        // Challenge 3: Path Traversal
+        function downloadFile() {
+            const filename = document.getElementById('filename').value;
+            const result = document.getElementById('downloadResult');
+            
+            if (fileSystem[filename]) {
+                const content = fileSystem[filename];
+                result.innerHTML = `
+                    <h4>File Content: ${filename}</h4>
+                    <div class="code-block">${content}</div>
+                `;
+                
+                if (filename.includes('../') || filename.includes('..\\')) {
+                    result.innerHTML += '<div class="success">🎯 SUCCESS! Path traversal attack successful!</div>';
+                }
+            } else {
+                result.innerHTML = `<div class="error">File not found: ${filename}</div>`;
+            }
+        }
+        
+        function setFilename(name) {
+            document.getElementById('filename').value = name;
+        }
+        
+        // Challenge 4: Missing Authorization
+        function viewUsers() {
+            const result = document.getElementById('adminResult');
+            result.innerHTML = `
+                <h4>User List (Limited View)</h4>
+                <ul>
+                    <li>John Doe - Engineer</li>
+                    <li>Jane Smith - Marketing</li>
+                    <li>Bob Wilson - Sales Manager</li>
+                </ul>
+            `;
+        }
+        
+        function adminPanel() {
+            const result = document.getElementById('adminResult');
+            result.innerHTML = `
+                <div class="admin-area">
+                    <h4>🔥 ADMIN PANEL ACCESS GRANTED!</h4>
+                    <p><strong>🎯 SUCCESS!</strong> You accessed the admin panel without proper authorization!</p>
+                    <ul>
+                        <li>👥 Total Users: 150</li>
+                        <li>🔑 Admin Accounts: 3</li>
+                        <li>💰 Total Payroll: $12,500,000</li>
+                        <li>🏢 Server Status: ONLINE</li>
+                    </ul>
+                    <p><em>In a real system, this would expose sensitive administrative data!</em></p>
+                </div>
+            `;
+        }
+        
+        function deleteUser() {
+            const result = document.getElementById('adminResult');
+            result.innerHTML = `
+                <div class="admin-area">
+                    <h4>🔥 USER DELETION ATTEMPTED!</h4>
+                    <p><strong>🎯 SUCCESS!</strong> You triggered a privileged function!</p>
+                    <p>User 'john_doe' has been scheduled for deletion...</p>
+                    <p><em>In a real system, this could cause data loss!</em></p>
+                </div>
+            `;
+        }
+        
+        function createUser() {
+            const result = document.getElementById('adminResult');
+            result.innerHTML = `
+                <div class="admin-area">
+                    <h4>🔥 USER CREATION ATTEMPTED!</h4>
+                    <p><strong>🎯 SUCCESS!</strong> You accessed user creation function!</p>
+                    <p>New admin user 'backdoor_admin' created with password 'hacked123'</p>
+                    <p><em>In a real system, this could create unauthorized access!</em></p>
+                </div>
+            `;
+        }
+        
+        // Challenge 5: Privilege Escalation
+        function updateSettings() {
+            const role = document.getElementById('role').value;
+            const result = document.getElementById('settingsResult');
+            
+            if (role === 'admin' || role === 'moderator') {
+                result.innerHTML = `
+                    <div class="admin-area">
+                        <h4>🔥 PRIVILEGE ESCALATION SUCCESSFUL!</h4>
+                        <p><strong>🎯 SUCCESS!</strong> You escalated your privileges to: ${role.toUpperCase()}</p>
+                        <p>You now have administrative access to the system!</p>
+                        <p><em>In a real system, this would grant unauthorized elevated privileges!</em></p>
+                    </div>
+                `;
+            } else {
+                result.innerHTML = `
+                    <h4>Settings Updated</h4>
+                    <p>Your user settings have been updated successfully.</p>
+                    <p>Role: ${role}</p>
+                `;
+            }
+            
+            return false; // Prevent form submission
+        }
+        
+        // Console logging for pentesting practice
+        console.log('%c🔓 ACCESS CONTROL LAB LOADED', 'color: red; font-size: 16px; font-weight: bold;');
+        console.log('Available user IDs: 1000-1005, 9999');
+        console.log('Admin accounts: 1000 (Administrator), 9999 (Super Admin)');
+        console.log('Try IDOR attacks by changing user/document IDs');
+        console.log('Use DevTools to modify hidden form fields');
+        
+        // Expose some data for advanced testing
+        window.userData = users;
+        window.documentData = documents;
+        window.fileData = fileSystem;
+    </script>
+</body>
+</html>
